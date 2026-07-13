@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>SKETCH FORGE 完成イメージ v2 ── 触れるスケッチ</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { background:#0e1116; color:#e2e7ee; font-family:system-ui,sans-serif; overflow-x:hidden; }
+  .bglayer { position:fixed; inset:0; z-index:0; display:none; }
+  .bglayer.on { display:block; }
+  #bgVignette { position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 30%, transparent 40%, rgba(5,7,10,.55) 100%); }
+  #bgSwitch { position:fixed; top:10px; right:10px; z-index:40; display:flex; gap:6px; }
+  #bgSwitch button { padding:7px 11px; border-radius:999px; border:1px solid #37424f; background:#161c24dd; color:#aab6c4; font-weight:800; font-size:11px; cursor:pointer; }
+  #bgSwitch button.on { border-color:#ffd964; color:#ffe9a3; box-shadow:0 0 10px #ffd96433; }
+  #app { position:relative; z-index:1; max-width:520px; margin:0 auto; padding:12px 12px 60px; }
+  h2 { font-size:13.5px; color:#939cab; letter-spacing:.12em; margin:26px 2px 8px; border-left:3px solid #4f9dff; padding-left:8px; }
+  .note { font-size:12px; color:#8a93a0; margin:2px 2px 10px; line-height:1.8; }
+  .card { background:#181d24d9; border:1px solid #262f3b; border-radius:16px; padding:13px; backdrop-filter:blur(4px); }
+  #splash { position:fixed; inset:0; z-index:50; background:#0c0f13; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+  #splashCv { width:min(440px,92vw); height:210px; }
+  #splashSub { color:#7d879a; font-size:12px; letter-spacing:.28em; opacity:0; transition:1s; margin-top:8px; }
+  #splashSkip { position:absolute; bottom:26px; color:#525b66; font-size:11px; }
+  .steps { display:flex; gap:6px; margin:0 0 8px; }
+  .step { flex:1; text-align:center; font-size:11px; font-weight:800; padding:8px 4px; border-radius:10px; background:#1a212b; color:#5f6975; border:1px solid #262f3b; transition:.3s; }
+  .step.now { background:#0d2036; color:#bfe0ff; border-color:#4f9dff; box-shadow:0 0 12px #4f9dff33; }
+  .step.done { background:#14231a; color:#9fd8ad; border-color:#3f6c4d; }
+  .stage3d { position:relative; height:44vh; min-height:290px; border-radius:16px; overflow:hidden; background:radial-gradient(130% 110% at 50% 0%, #1a2438 0%, #10151d 70%); border:1px solid #2a3648; touch-action:none; }
+  .stage3d canvas { display:block; }
+  .statebar { position:absolute; left:0; right:0; top:0; padding:9px 12px; font-weight:900; font-size:12.5px; text-align:center; backdrop-filter:blur(2px); }
+  .sb-blue { background:linear-gradient(#0d2036ee,#0d203600); color:#9fccff; }
+  .sb-gold { background:linear-gradient(#332a10ee,#332a1000); color:#ffe9a3; }
+  .rchip { position:absolute; right:10px; bottom:10px; background:#0d1117dd; border:1px solid #ffd964; color:#ffe9a3; font-weight:900; font-size:14px; padding:6px 13px; border-radius:12px; }
+  .tanchip { position:absolute; left:10px; bottom:10px; background:#0d1117dd; border:1px solid #4f9dff; color:#cfe4ff; font-weight:800; font-size:11px; padding:5px 11px; border-radius:999px; }
+  #hand { position:absolute; font-size:34px; pointer-events:none; filter:drop-shadow(0 2px 6px #000a); animation:handTap 1.5s infinite; z-index:5; }
+  @keyframes handTap { 0%,100%{ transform:translate(-30%,10%) scale(1);} 50%{ transform:translate(-30%,-4%) scale(.86);} }
+  .btnrow { display:flex; gap:8px; margin-top:10px; }
+  .cta { flex:1; padding:13px 8px; border-radius:12px; border:none; font-weight:900; font-size:12.5px; cursor:pointer; background:#4f9dff; color:#08192e; box-shadow:0 0 16px #4f9dff44; }
+  .cta.alt { background:#232b36; color:#c9d4e2; border:1px solid #37424f; box-shadow:none; }
+  .cta:disabled { opacity:.4; box-shadow:none; }
+  .lesson-card { border:1px solid #33405078; }
+  .lc-tag { display:inline-block; font-size:10px; font-weight:900; letter-spacing:.1em; color:#8fc1ff; border:1px solid #35547a; padding:2px 9px; border-radius:999px; margin-bottom:8px; }
+  .lc-title { font-size:15.5px; font-weight:900; color:#eef3f9; margin-bottom:8px; }
+  .lc-body { font-size:13px; line-height:2.0; color:#c6cdd6; }
+  .lc-body b { color:#ffd964; }
+  .lc-fig { margin:10px 0; border-radius:12px; overflow:hidden; background:#f4f6f8; }
+  .lc-fig canvas { display:block; width:100%; height:150px; }
+  .lc-cap { font-size:11px; color:#79818d; margin-top:6px; line-height:1.7; }
+  #pzCv { width:100%; height:190px; border-radius:12px; background:#f4f6f8; display:block; }
+  .howto { display:flex; gap:8px; align-items:center; background:#10161d; border:1px dashed #35404d; border-radius:10px; padding:8px 10px; font-size:11.5px; color:#9aa6b4; line-height:1.7; margin-bottom:8px; }
+  .palette { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .pal { padding:11px 13px; border-radius:12px; border:1px solid #37424f; background:#1d242e; color:#dfe7f0; font-weight:800; font-size:12.5px; cursor:pointer; text-align:left; }
+  .pal small { display:block; font-weight:600; font-size:10px; color:#7d8794; }
+  .pal.used { opacity:.35; pointer-events:none; }
+  .pal.bad { animation:shake .4s; border-color:#e05252; }
+  @keyframes shake { 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  #pzMsg { margin-top:8px; font-weight:800; font-size:12.5px; min-height:36px; line-height:1.7; }
+  .kbd { display:inline-block; background:#2a2f38; border:1px solid #4a5260; border-bottom-width:3px; border-radius:6px; padding:1px 8px; font-weight:900; font-size:11.5px; color:#ffe9a3; }
+  .hero-steps { display:flex; gap:6px; flex-wrap:wrap; }
+  .hstep { flex:1 1 21%; background:#1d242e; border:1px solid #2b3542; border-radius:10px; padding:7px 4px; text-align:center; font-size:10px; color:#8b93a0; }
+  .hstep.on { border-color:#4f9dff; color:#cfe4ff; box-shadow:0 0 8px #4f9dff33 inset; }
+  .homework { border-left:3px solid #7ec48c; background:#14201a; border-radius:10px; padding:10px 12px; font-size:12px; line-height:1.8; }
+</style></head><body>
+<canvas id="bgA" class="bglayer on"></canvas>
+<canvas id="bgLines" class="bglayer on"></canvas>
+<canvas id="bgB" class="bglayer"></canvas>
+<canvas id="bgC" class="bglayer"></canvas>
+<div id="bgVignette"></div>
+<div id="bgSwitch">
+  <button class="on" data-bg="A">A 実体</button>
+  <button data-bg="B">B 光</button>
+  <button data-bg="C">C 海</button>
+</div>
+
+<div id="splash">
+  <canvas id="splashCv"></canvas>
+  <div id="splashSub">未定義の青を、ぜんぶ黒にする。</div>
+  <div id="splashSkip">タップでスキップ</div>
+</div>
+
+<div id="app">
+
+  <h2>✏️ 代表実験「接線拘束は生きている」</h2>
+  <div class="steps">
+    <div class="step now" id="s1">STEP1<br>金の玉を<br>指でつかむ</div>
+    <div class="step" id="s2">STEP2<br>ぐるぐる<br>動かす</div>
+    <div class="step" id="s3">STEP3<br>📐ボタンで<br>黒に固定</div>
+  </div>
+  <div class="stage3d" id="stage">
+    <div class="statebar sb-blue" id="stBar">🔵 いまは「未定義」＝青。だから自由に動く</div>
+    <div id="hand">👆</div>
+    <span class="tanchip" id="tanChip">⌒ 接線拘束 ON ＝白い線となめらか接続</span>
+    <span class="rchip" id="rChip">R --</span>
+  </div>
+  <div class="btnrow">
+    <button class="cta alt" id="btnTan">💥 拘束を切ったら？</button>
+    <button class="cta" id="btnDim">📐 寸法R25を入れて完全定義</button>
+  </div>
+  <div class="note" id="expNote">動かしても動かしても、白い直線と<b>なめらか（＝接線）</b>のまま。これが「拘束」＝ソリドワークスとの約束。</div>
+
+  <h2>📖 解説カードの見本（本番はこの濃さ×3枚×7レッスン）</h2>
+  <div class="card lesson-card">
+    <span class="lc-tag">L2 ── カード 2/3</span>
+    <div class="lc-title">接円弧（せつえんこ）は「離してから戻る」</div>
+    <div class="lc-body">
+      直線を描いた後、<b>マウスを終点から一度離して、また戻す</b>。
+      それだけで直線ツールのまま<b>円弧モードに切り替わる</b>（自動遷移）。
+      キーボードの <span class="kbd">A</span> キーでも同じことができる。
+      弧がどっちに膨らむかは<b>マウスを離す方向</b>で決まる——上に離せば上ぶくれ、下なら下ぶくれ。
+    </div>
+    <div class="lc-fig"><canvas id="cardCv"></canvas></div>
+    <div class="lc-cap">↑ 本番はこの図解も<b>触れる3Dシーン</b>で動く（カード1枚＝専用シーン1本のいつものルール）。</div>
+  </div>
+
+  <h2>🧩 Fableの一手「完全定義チャレンジ」</h2>
+  <div class="howto">🎮 <span><b>あそびかた：</b>下の白い画面が「青い＝まだ未完成」のスケッチ。下のボタンから<b>正しい拘束を3つ選んで</b>真っ黒（完全定義）にしたら勝ち。いらない拘束を押すと<b>赤（エラー）</b>。</span></div>
+  <div class="card">
+    <canvas id="pzCv"></canvas>
+    <div class="palette">
+      <button class="pal" data-k="tan">⌒ 接線<small>円弧と直線をなめらかに</small></button>
+      <button class="pal" data-k="eq">＝ 等しい<small>左右のRを同じ大きさに</small></button>
+      <button class="pal" data-k="dim">📐 R10<small>半径の数字を決める</small></button>
+      <button class="pal" data-k="perp">⟂ 直角<small>これは罠かも…</small></button>
+    </div>
+    <div id="pzMsg">まずはどれか1つ押してみて。</div>
+  </div>
+
+  <h2>🌱 育つヒーロー ──「スケッチから生まれる部品」</h2>
+  <div class="card">
+    <div class="hero-steps">
+      <div class="hstep on">1 原点</div><div class="hstep on">2 直線</div><div class="hstep on">3 円弧</div><div class="hstep on">4 拘束⌒</div>
+      <div class="hstep">5 寸法</div><div class="hstep">6 完全定義</div><div class="hstep">7 押し出し3D</div><div class="hstep">8 フィレットR</div>
+    </div>
+  </div>
+
+  <h2>🏠 実機ミッション（宿題カード）</h2>
+  <div class="homework">
+    <b>今日の実機ミッション（L2の例）:</b><br>
+    長穴（スロット）を3通りで描け。<br>
+    ①スロットツール ②直線＋接円弧（<span class="kbd">A</span>キー遷移）③円2つ＋接線2本＋トリム。<br>
+    ✓ 全部「完全定義（黒）」にできたら勝ち。
+  </div>
+
+  <h2>📚 第1章「R形状 完全克服」構成</h2>
+  <div class="note">
+    L1 青と黒の法則／L2 円弧の3兄弟と<span class="kbd">A</span>キー／L3 接線拘束のすべて／
+    L4 長穴・キー溝・フィレット／L5 つながるRの設計（ベルト形状）／L6 完全定義への道／L7 ボス「R職人の試験」<br>
+    ＋毎レッスン実機宿題＋v2標準装備（DAILY・サビ・ガチャ・自信ベット・現場の目）全部入り。
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* ================= 打刻: 青で描かれ→拘束→完全定義で白金に ================= */
+(function(){
+  const cv = document.getElementById("splashCv");
+  cv.width = Math.max(2, cv.clientWidth*2); cv.height = 420;
+  const c = cv.getContext("2d"); c.scale(2,2);
+  const W = cv.width/2;
+  const S=[[0,20,0,0],[0,0,16,0],[16,0,16,10],[16,10,0,10],[0,10,0,20],[0,20,16,20]];
+  const K=[[24,0,24,20],[36,0,26,10],[26,10,36,20]];
+  const E=[[44,0,44,20],[44,0,58,0],[44,10,54,10],[44,20,58,20]];
+  const T=[[62,0,78,0],[70,0,70,20]];
+  const C2=[[96,2,88,0],[88,0,84,4],[84,4,84,16],[84,16,88,20],[88,20,96,18]];
+  const H=[[102,0,102,20],[116,0,116,20],[102,10,116,10]];
+  const paths=[].concat(S,K,E,T,C2,H);
+  const total=paths.length;
+  let t=0, phase=0, glow=0, splashDone=false;
+  function tick(){
+    c.clearRect(0,0,W,210);
+    const sc=Math.min(2.6, W/150);
+    c.save(); c.translate(W/2-58*sc/1/2*1, 40); c.scale(sc,sc);
+    const drawn = phase===0? Math.floor(t/2.4): total;
+    for(let i=0;i<Math.min(drawn,total);i++){
+      const p=paths[i];
+      c.strokeStyle = phase>=2 ? "#f5f7fa" : "#4f9dff";
+      c.shadowColor="#ffd964"; c.shadowBlur = phase>=2? glow:0;
+      c.lineWidth=2.6/sc*2; c.lineCap="round"; c.lineJoin="round";
+      c.beginPath(); c.moveTo(p[0],p[1]); c.lineTo(p[2],p[3]); c.stroke();
+    }
+    c.shadowBlur=0;
+    if(phase===1){
+      const nb=Math.min(6,Math.floor((t-total*2.4)/8));
+      const badges=[[8,-6,"⌒"],[30,22,"⟂"],[51,-6,"＝"],[70,22,"◎"],[90,-6,"⌒"],[109,22,"＝"]];
+      for(let i=0;i<nb;i++){ const b=badges[i];
+        c.fillStyle="#151a21"; c.strokeStyle="#ffd964"; c.lineWidth=0.8;
+        c.beginPath(); c.arc(b[0],b[1],4.6,0,7); c.fill(); c.stroke();
+        c.fillStyle="#ffd964"; c.font="5.5px sans-serif"; c.textAlign="center"; c.fillText(b[2],b[0],b[1]+2); }
+      if(nb>=6 && t>total*2.4+70){ phase=2; document.getElementById("splashSub").style.opacity=1;
+        if(navigator.vibrate)try{navigator.vibrate(30)}catch(e){} }
+    }
+    c.restore();
+    c.textAlign="center";
+    c.fillStyle= phase>=2? "#ffe9a3":"#3a4655";
+    c.font="900 26px sans-serif"; c.fillText("FORGE", W/2, 150);
+    c.fillStyle="#5b6470"; c.font="10px sans-serif";
+    c.fillText(phase===0?"スケッチ中…（青＝未定義）": phase===1?"拘束を追加中…":"⚫ 完全定義。", W/2, 176);
+    t++;
+    if(phase===0 && t>total*2.4) phase=1;
+    if(phase===2) glow=Math.min(16,glow+1);
+    if(!splashDone) requestAnimationFrame(tick);
+  }
+  tick();
+  const off=()=>{ splashDone=true; document.getElementById("splash").style.display="none"; };
+  document.getElementById("splash").addEventListener("pointerdown", off);
+  setTimeout(off, 8000);
+})();
+
+/* ================= 背景 3系統（線画ゼロ・実体/質感/光） ================= */
+window.BG_MODE="A";
+(function(){
+  /* ---- A: 実体（Three.js・角丸+長穴の実プレートをExtrude） ---- */
+  const cvA=document.getElementById("bgA");
+  const rA=new THREE.WebGLRenderer({canvas:cvA,antialias:true,alpha:true});
+  rA.setPixelRatio(Math.min(2,devicePixelRatio));
+  const sA=new THREE.Scene();
+  sA.fog=new THREE.Fog(0x0e1116, 9, 24);
+  const cA=new THREE.PerspectiveCamera(38,1,0.1,50); cA.position.set(0,0.2,8.5);
+  function rsA(){ const w=Math.max(4,innerWidth), h=Math.max(4,innerHeight);
+    rA.setSize(w,h); cA.aspect=w/h; cA.updateProjectionMatrix(); }
+  rsA(); addEventListener("resize",rsA);
+  sA.add(new THREE.AmbientLight(0x334155,1.1));
+  const key=new THREE.DirectionalLight(0xfff2d8,1.0); key.position.set(3,5,4); sA.add(key);
+  const rim=new THREE.DirectionalLight(0x4f9dff,1.6); rim.position.set(-4,-2,-3); sA.add(rim);
+  function roundedRect(w,h,r){ const s=new THREE.Shape();
+    s.moveTo(-w/2+r,-h/2); s.lineTo(w/2-r,-h/2); s.absarc(w/2-r,-h/2+r,r,-Math.PI/2,0,false);
+    s.lineTo(w/2,h/2-r); s.absarc(w/2-r,h/2-r,r,0,Math.PI/2,false);
+    s.lineTo(-w/2+r,h/2); s.absarc(-w/2+r,h/2-r,r,Math.PI/2,Math.PI,false);
+    s.lineTo(-w/2,-h/2+r); s.absarc(-w/2+r,-h/2+r,r,Math.PI,Math.PI*1.5,false);
+    return s; }
+  const shape=roundedRect(3.4,2.2,0.55);
+  const slot=new THREE.Path();
+  slot.absarc(-0.55,0,0.28,Math.PI/2,Math.PI*1.5,false);
+  slot.lineTo(0.55,-0.28); slot.absarc(0.55,0,0.28,-Math.PI/2,Math.PI/2,false); slot.lineTo(-0.55,0.28);
+  shape.holes.push(slot);
+  const hole=new THREE.Path(); hole.absarc(1.15,0.62,0.16,0,Math.PI*2,false); shape.holes.push(hole);
+  const geo=new THREE.ExtrudeGeometry(shape,{depth:0.35,bevelEnabled:true,bevelThickness:0.06,bevelSize:0.06,bevelSegments:4,curveSegments:48});
+  geo.center();
+  const part=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x3a4656,metalness:0.85,roughness:0.34}));
+  part.position.set(0.5,-0.65,-1.2); part.scale.setScalar(2.05);
+  sA.add(part);
+  const motes=[];
+  for(let i=0;i<12;i++){ const m=new THREE.Mesh(new THREE.SphereGeometry(0.05+Math.random()*0.05,8,6),
+    new THREE.MeshBasicMaterial({color:i%3?0x4f9dff:0xffd964,transparent:true,opacity:0.22}));
+    m.position.set((Math.random()-0.5)*10,(Math.random()-0.5)*6,-2-Math.random()*6);
+    sA.add(m); motes.push({m,ph:Math.random()*6.28}); }
+  /* ---- B: 工房の光 ---- */
+  const cvB=document.getElementById("bgB"), cB=cvB.getContext("2d");
+  /* ---- C: 定義の海 ---- */
+  const cvC=document.getElementById("bgC"), cC=cvC.getContext("2d");
+  function rs2(){ [cvB,cvC].forEach(cv=>{ cv.width=Math.max(4,innerWidth); cv.height=Math.max(4,innerHeight); }); }
+  rs2(); addEventListener("resize",rs2);
+  const orbs=[]; const gems=[];
+  function newOrb(){ orbs.push({x:Math.random()*cvC.width, y:-30, r:6+Math.random()*10, v:0.25+Math.random()*0.4}); }
+  let tBG=0;
+  (function loop(){
+    tBG+=1/60;
+    if(window.BG_MODE==="A"){
+      part.rotation.x=Math.sin(tBG*0.13)*0.5+0.35;
+      part.rotation.y=tBG*0.11;
+      motes.forEach(o=>{ o.m.position.y+=Math.sin(tBG*0.5+o.ph)*0.0015; o.m.position.x+=0.0011; if(o.m.position.x>5.5)o.m.position.x=-5.5; });
+      rA.render(sA,cA);
+    } else if(window.BG_MODE==="B"){
+      const w=cvB.width,h=cvB.height;
+      const g=cB.createLinearGradient(0,0,w,h);
+      g.addColorStop(0,"#10151d"); g.addColorStop(0.55,"#131a25"); g.addColorStop(1,"#0c0f14");
+      cB.fillStyle=g; cB.fillRect(0,0,w,h);
+      for(let i=0;i<3;i++){
+        const off=((tBG*18+i*260)%(w+520))-260;
+        const bg=cB.createLinearGradient(off-130,0,off+130,0);
+        bg.addColorStop(0,"rgba(79,157,255,0)"); bg.addColorStop(0.5, i===1?"rgba(255,217,100,0.05)":"rgba(79,157,255,0.07)"); bg.addColorStop(1,"rgba(79,157,255,0)");
+        cB.save(); cB.translate(w/2,h/2); cB.rotate(-0.5); cB.translate(-w/2,-h/2);
+        cB.fillStyle=bg; cB.fillRect(off-130,-h,260,h*3); cB.restore(); }
+      for(let i=0;i<7;i++){
+        const x=(Math.sin(tBG*0.07+i*2.1)*0.5+0.5)*w, y=(Math.cos(tBG*0.05+i*1.7)*0.5+0.5)*h;
+        const rr=40+i*14;
+        const rg=cB.createRadialGradient(x,y,0,x,y,rr);
+        rg.addColorStop(0, i%2? "rgba(79,157,255,0.05)":"rgba(255,217,100,0.035)"); rg.addColorStop(1,"rgba(0,0,0,0)");
+        cB.fillStyle=rg; cB.beginPath(); cB.arc(x,y,rr,0,7); cB.fill(); }
+    } else {
+      const w=cvC.width,h=cvC.height;
+      const g=cC.createLinearGradient(0,0,0,h);
+      g.addColorStop(0,"#0d1420"); g.addColorStop(1,"#0a0c10");
+      cC.fillStyle=g; cC.fillRect(0,0,w,h);
+      if(Math.random()<0.02 && orbs.length<14) newOrb();
+      const defY=h*0.8;
+      for(let i=orbs.length-1;i>=0;i--){ const o=orbs[i]; o.y+=o.v;
+        const rg=cC.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*2.2);
+        rg.addColorStop(0,"rgba(120,180,255,0.5)"); rg.addColorStop(1,"rgba(79,157,255,0)");
+        cC.fillStyle=rg; cC.beginPath(); cC.arc(o.x,o.y,o.r*2.2,0,7); cC.fill();
+        if(o.y>defY){ orbs.splice(i,1); if(gems.length<26) gems.push({x:o.x, y:defY+20+Math.random()*40, r:o.r*0.8, born:tBG}); } }
+      gems.forEach(gm=>{
+        const glow=Math.min(1,(tBG-gm.born)*2);
+        cC.save(); cC.translate(gm.x,gm.y);
+        cC.fillStyle="#171c25";
+        cC.beginPath(); for(let k=0;k<6;k++){ const a=k/6*6.28; cC.lineTo(Math.cos(a)*gm.r, Math.sin(a)*gm.r); } cC.closePath(); cC.fill();
+        cC.fillStyle="rgba(255,217,100,"+(0.35*glow)+")";
+        cC.beginPath(); cC.arc(-gm.r*0.3,-gm.r*0.3,gm.r*0.28,0,7); cC.fill();
+        cC.restore(); });
+    }
+    requestAnimationFrame(loop);
+  })();
+  document.querySelectorAll("#bgSwitch button").forEach(b=>b.addEventListener("click",()=>{
+    window.BG_MODE=b.dataset.bg;
+    document.querySelectorAll("#bgSwitch button").forEach(x=>x.classList.toggle("on",x===b));
+    document.getElementById("bgA").classList.toggle("on",window.BG_MODE==="A");
+    document.getElementById("bgLines").classList.toggle("on",window.BG_MODE==="A");
+    document.getElementById("bgB").classList.toggle("on",window.BG_MODE==="B");
+    document.getElementById("bgC").classList.toggle("on",window.BG_MODE==="C");
+  }));
+})();
+
+/* ================= 代表実験: 触れる接線拘束（誘導つき） ================= */
+(function(){
+  const holder=document.getElementById("stage");
+  const W=()=>Math.max(2,holder.clientWidth), H=()=>Math.max(2,holder.clientHeight);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(3,devicePixelRatio)); renderer.setSize(W(),H());
+  holder.appendChild(renderer.domElement);
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(40,W()/H(),0.1,100);
+  cam.position.set(0.3,0.4,7); cam.lookAt(0,0,0);
+  scene.add(new THREE.AmbientLight(0xffffff,0.9));
+  const dl=new THREE.DirectionalLight(0xffffff,0.6); dl.position.set(2,4,5); scene.add(dl);
+  const A=new THREE.Vector3(-2.5,-1.2,0), B=new THREE.Vector3(-0.3,-1.2,0);
+  const lineMesh=new THREE.Mesh(new THREE.BoxGeometry(A.distanceTo(B),0.035,0.02), new THREE.MeshBasicMaterial({color:0xf2f6fb}));
+  lineMesh.position.set((A.x+B.x)/2,A.y,0); scene.add(lineMesh);
+  const bDot=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,10),new THREE.MeshBasicMaterial({color:0xffffff})); bDot.position.copy(B); scene.add(bDot);
+  let C=new THREE.Vector3(1.8,0.5,0);
+  let arcMesh=null, arcColor=0x4f9dff;
+  let tangentOn=true, dimOn=false;
+  const cBall=new THREE.Mesh(new THREE.SphereGeometry(0.13,18,14),new THREE.MeshStandardMaterial({color:0xffd964,emissive:0x8a6400,emissiveIntensity:0.8}));
+  scene.add(cBall);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(0.2,0.24,32), new THREE.MeshBasicMaterial({color:0xffd964,transparent:true,opacity:0.7,side:THREE.DoubleSide}));
+  scene.add(ring);
+  const hand=document.getElementById("hand");
+  function hand2follow(){
+    const v=C.clone().project(cam);
+    hand.style.left=((v.x+1)/2*100)+"%";
+    hand.style.top=((-v.y+1)/2*100)+"%";
+  }
+  function buildArc(){
+    if(arcMesh){ scene.remove(arcMesh); arcMesh.geometry.dispose(); }
+    let curvePts=[];
+    const dy=C.y-B.y, dx=C.x-B.x;
+    if(tangentOn && Math.abs(dy)>0.05){
+      const k=(dx*dx+dy*dy)/(2*dy);
+      const ctr=new THREE.Vector3(B.x,B.y+k,0), R=Math.abs(k);
+      let a0=Math.atan2(B.y-ctr.y,B.x-ctr.x), a1=Math.atan2(C.y-ctr.y,C.x-ctr.x);
+      let d=a1-a0; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+      for(let i=0;i<=48;i++){ const a=a0+d*i/48; curvePts.push(new THREE.Vector3(ctr.x+R*Math.cos(a),ctr.y+R*Math.sin(a),0)); }
+      document.getElementById("rChip").textContent = dimOn? "R 25.0 📐固定" : "R "+(R*10).toFixed(1);
+    } else if(tangentOn){ curvePts=[B.clone(),C.clone()]; document.getElementById("rChip").textContent="R ∞（直線）"; }
+    else {
+      for(let i=0;i<=48;i++){ const a=0.6+i/48*3.2; curvePts.push(new THREE.Vector3(C.x-1.1+Math.cos(a),C.y-0.2+Math.sin(a)*0.9,0)); }
+      document.getElementById("rChip").textContent="R ??（迷子）";
+    }
+    const curve=new THREE.CatmullRomCurve3(curvePts);
+    arcMesh=new THREE.Mesh(new THREE.TubeGeometry(curve,48,0.028,6,false), new THREE.MeshBasicMaterial({color:arcColor}));
+    scene.add(arcMesh);
+    cBall.position.copy(C); hand2follow();
+  }
+  buildArc();
+  const ray=new THREE.Raycaster(), v2=new THREE.Vector2(), zPlane=new THREE.Plane(new THREE.Vector3(0,0,1),0);
+  let drag=false, moved=0, step=1;
+  const stepEls=[null,document.getElementById("s1"),document.getElementById("s2"),document.getElementById("s3")];
+  function setStep(n){
+    step=n;
+    for(let i=1;i<=3;i++){ stepEls[i].className = "step"+(i<n?" done":i===n?" now":""); }
+  }
+  function toPlane(e){
+    const r=renderer.domElement.getBoundingClientRect();
+    v2.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+    cam.updateMatrixWorld(); ray.setFromCamera(v2,cam);
+    const p=new THREE.Vector3(); return ray.ray.intersectPlane(zPlane,p) ? p : null;
+  }
+  renderer.domElement.addEventListener("pointerdown",e=>{
+    try{ renderer.domElement.setPointerCapture(e.pointerId); }catch(err){}
+    const p=toPlane(e);
+    if(p && p.distanceTo(C)<0.9){ drag=true; hand.style.display="none";
+      if(step===1){ setStep(2); document.getElementById("stBar").textContent="🔵 そのまま指を動かして！"; } }
+  });
+  renderer.domElement.addEventListener("pointermove",e=>{
+    if(!drag)return; const p=toPlane(e); if(!p)return;
+    C.x=Math.max(0.1,Math.min(3.3,p.x)); C.y=Math.max(-1.9,Math.min(2.1,p.y));
+    if(dimOn){ dimOn=false; arcColor=0x4f9dff; setBar(false); }
+    moved++;
+    if(step===2 && moved>25){ setStep(3);
+      document.getElementById("stBar").textContent="🔵 な？ずっと滑らかだろ。次は📐ボタンで固定＝黒！"; }
+    buildArc();
+  });
+  addEventListener("pointerup",()=>drag=false);
+  const stBar=document.getElementById("stBar");
+  function setBar(gold){
+    if(gold){ stBar.className="statebar sb-gold"; stBar.textContent="⚫ 完全定義！もう動かない（本物のSWでは黒色になる）"; }
+    else { stBar.className="statebar sb-blue"; stBar.textContent="🔵 いまは「未定義」＝青。だから自由に動く"; }
+  }
+  document.getElementById("btnTan").addEventListener("click",function(){
+    tangentOn=!tangentOn;
+    this.textContent = tangentOn? "💥 拘束を切ったら？" : "🔗 拘束をもどす";
+    document.getElementById("tanChip").textContent = tangentOn? "⌒ 接線拘束 ON ＝白い線となめらか接続" : "💥 拘束OFF＝弧が直線から外れて迷子";
+    document.getElementById("expNote").innerHTML = tangentOn
+      ? "動かしても動かしても、白い直線と<b>なめらか（＝接線）</b>のまま。これが「拘束」＝ソリドワークスとの約束。"
+      : "拘束を切ると弧は直線と<b>無関係な迷子</b>になる。だから拘束を先に、寸法は後に——これが順番の鉄則。";
+    buildArc();
+  });
+  document.getElementById("btnDim").addEventListener("click",()=>{
+    if(!tangentOn)return;
+    const dy=(C.y-B.y)||0.6, dx=C.x-B.x;
+    const k=(dx*dx+dy*dy)/(2*dy);
+    const ctr=new THREE.Vector3(B.x,B.y+k,0);
+    const dir=C.clone().sub(ctr).normalize();
+    C.copy(ctr.clone().add(dir.multiplyScalar(2.5)));
+    dimOn=true; arcColor=0xf2f6fb; setBar(true); buildArc();
+    if(step===3) stepEls[3].className="step done";
+    if(navigator.vibrate)try{navigator.vibrate([15,25,15])}catch(e){}
+  });
+  let t=0;
+  (function anim(){ t+=0.016;
+    ring.position.copy(cBall.position); ring.scale.setScalar(1+Math.sin(t*3)*0.12);
+    if(!drag && !dimOn) hand2follow();
+    renderer.render(scene,cam);
+    requestAnimationFrame(anim); })();
+  addEventListener("resize",()=>{ renderer.setSize(W(),H()); cam.aspect=W()/H(); cam.updateProjectionMatrix(); hand2follow(); });
+})();
+
+/* ================= 解説カード見本の図（Aキー遷移） ================= */
+(function(){
+  const cv=document.getElementById("cardCv");
+  cv.width=Math.max(2,cv.clientWidth*2); cv.height=300;
+  const c=cv.getContext("2d"); c.scale(2,2);
+  const W=cv.width/2;
+  let t=0;
+  (function loop(){
+    t+=1/60; const ph=(t%6)/6;
+    c.clearRect(0,0,W,150);
+    const y=95, x0=W/2-110;
+    const lp=Math.min(1,ph/0.25);
+    c.strokeStyle="#1e6fd9"; c.lineWidth=2.5; c.lineCap="round";
+    c.beginPath(); c.moveTo(x0,y); c.lineTo(x0+90*lp,y); c.stroke();
+    const cur=(x,yy)=>{ c.fillStyle="#333"; c.beginPath(); c.moveTo(x,yy); c.lineTo(x+8,yy+11); c.lineTo(x+3,yy+11); c.lineTo(x,yy+15); c.fill(); };
+    if(ph<0.25){ cur(x0+90*lp, y-2); c.fillStyle="#666"; c.font="10px sans-serif"; c.fillText("① 直線を描く", x0+20, y+28); }
+    else if(ph<0.45){
+      const k=(ph-0.25)/0.2; const dx=Math.sin(k*Math.PI)*26;
+      c.strokeStyle="#bbb"; c.setLineDash([3,3]); c.beginPath(); c.moveTo(x0+90,y); c.lineTo(x0+90+dx,y-dx*0.7); c.stroke(); c.setLineDash([]);
+      cur(x0+90+dx,y-dx*0.7-2);
+      c.fillStyle="#666"; c.font="10px sans-serif"; c.fillText("② 終点から離して…もどす（or Aキー）", x0+8, y+28);
+    } else {
+      const k=Math.min(1,(ph-0.45)/0.4);
+      c.strokeStyle="#1e6fd9"; c.beginPath();
+      c.arc(x0+90, y-35, 35, Math.PI/2, Math.PI/2 - k*Math.PI*0.9, true); c.stroke();
+      const ex=x0+90+35*Math.cos(Math.PI/2-k*Math.PI*0.9), ey=y-35+35*Math.sin(Math.PI/2-k*Math.PI*0.9);
+      cur(ex,ey-2);
+      c.fillStyle="#e6a700"; c.font="900 11px sans-serif"; c.fillText("⌒ 接線が自動で付く", x0+100, y+8);
+      c.fillStyle="#666"; c.font="10px sans-serif"; c.fillText("③ 直線ツールのまま円弧が描ける！", x0+8, y+28);
+    }
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ================= 拘束パズル（説明つき） ================= */
+(function(){
+  const cv=document.getElementById("pzCv");
+  cv.width=Math.max(2,cv.clientWidth*2); cv.height=380;
+  const c=cv.getContext("2d"); c.scale(2,2);
+  const W=cv.width/2;
+  const need={tan:false,eq:false,dim:false};
+  let red=0;
+  function draw(){
+    c.clearRect(0,0,W,190);
+    const done = need.tan&&need.eq&&need.dim;
+    const col = red>0 ? "#d63031" : done ? "#111" : "#1e6fd9";
+    c.strokeStyle=col; c.lineWidth=2.6; c.lineCap="round";
+    const y=125, x0=W/2-105;
+    c.beginPath();
+    c.moveTo(x0+30,y);
+    c.arc(x0+30,y-30,30,Math.PI/2,Math.PI*1.5,false);
+    c.lineTo(x0+180,y-60);
+    c.arc(x0+180,y-30,30,-Math.PI/2,Math.PI/2,false);
+    c.lineTo(x0+30,y);
+    c.stroke();
+    c.fillStyle= red>0?"#d63031": done?"#111":"#1e6fd9";
+    c.font="900 13px sans-serif"; c.textAlign="center";
+    c.fillText(red>0?"⚠ 過剰定義！（赤＝拘束のつけすぎエラー）": done?"⚫ 完全定義！ 黒になった！":"🔵 青＝まだ「未定義」の長穴", W/2, 34);
+    c.font="11px sans-serif";
+    if(!done && red===0){ c.fillStyle="#8a93a0"; c.fillText("↓ 正しい拘束3つで黒にしろ", W/2, 52); }
+    if(need.tan){ c.fillStyle="#e6a700"; c.font="900 12px sans-serif"; c.fillText("⌒",x0+30,y-70); c.fillText("⌒",x0+180,y+16); }
+    if(need.eq){ c.fillStyle="#e6a700"; c.fillText("＝R",W/2,y-30); }
+    if(need.dim){ c.fillStyle="#1a7f37"; c.fillText("R10",x0+8,y-40); }
+    if(red>0)red--;
+    requestAnimationFrame(draw);
+  }
+  draw();
+  const msg=document.getElementById("pzMsg");
+  document.querySelectorAll(".pal").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.k;
+    if(k==="perp"){ b.classList.add("bad"); red=100; msg.style.color="#ff9b9b";
+      msg.innerHTML="⚠ <b>過剰定義！</b> この形に直角の出番はない。本物のSWでも余計な拘束は赤エラー——「1個消す」が正しい対処。";
+      setTimeout(()=>b.classList.remove("bad"),450); return; }
+    need[k]=true; b.classList.add("used");
+    const say={tan:"⌒ 接線ON→円弧と直線がなめらかにつながった", eq:"＝ 等しいON→左右のRが同じ大きさに揃った", dim:"📐 R10が入った→大きさが決まった"};
+    if(need.tan&&need.eq&&need.dim){ msg.style.color="#ffe9a3";
+      msg.innerHTML="⚫ <b>完全定義！+3XP</b>　"+say[k]+"。<br>青→黒にする快感、これを7レッスンで体に入れる。";
+      if(navigator.vibrate)try{navigator.vibrate([15,30,15])}catch(e){} }
+    else { msg.style.color="#9fccff"; msg.innerHTML=say[k]+"。<b>まだ青が残ってる…</b>"; }
+  }));
+})();
+</script>
+<script>
+"use strict";
+/* ===== 設計図オーバーレイ（A背景に重ねる・承認済み合体版） ===== */
+try {
+  const cvL = document.getElementById("bgLines");
+  const rsL = () => { cvL.width = Math.max(4, innerWidth); cvL.height = Math.max(4, innerHeight); };
+  rsL(); addEventListener("resize", rsL);
+  const cL = cvL.getContext("2d");
+  const SEGS = (s) => [
+    { k: "l", x1: 0, y1: 0, x2: 120 * s, y2: 0 },
+    { k: "a", cx: 120 * s, cy: -28 * s, r: 28 * s, a0: Math.PI / 2, a1: 0 },
+    { k: "l", x1: 148 * s, y1: -28 * s, x2: 148 * s, y2: -80 * s },
+    { k: "a", cx: 120 * s, cy: -80 * s, r: 28 * s, a0: 0, a1: -Math.PI / 2 },
+    { k: "l", x1: 120 * s, y1: -108 * s, x2: 24 * s, y2: -108 * s },
+    { k: "a", cx: 24 * s, cy: -84 * s, r: 24 * s, a0: -Math.PI / 2, a1: -Math.PI },
+    { k: "l", x1: 0, y1: -84 * s, x2: 0, y2: 0 },
+    { k: "a", cx: 44 * s, cy: -54 * s, r: 12 * s, a0: Math.PI / 2, a1: Math.PI * 1.5 },
+    { k: "l", x1: 44 * s, y1: -66 * s, x2: 96 * s, y2: -66 * s },
+    { k: "a", cx: 96 * s, cy: -54 * s, r: 12 * s, a0: -Math.PI / 2, a1: Math.PI / 2 },
+    { k: "l", x1: 96 * s, y1: -42 * s, x2: 44 * s, y2: -42 * s }
+  ];
+  let tL = 0;
+  const CYC = 13;
+  function loopL() {
+    tL += 1 / 60;
+    cL.clearRect(0, 0, cvL.width, cvL.height);
+    if (window.BG_MODE === "A") {
+      const s = Math.min(cvL.width, 700) / 430;
+      const ox = cvL.width * 0.09, oy = cvL.height * 0.30;
+      const ph = (tL % CYC) / CYC;
+      const segs = SEGS(s);
+      const draw = Math.min(1, ph / 0.38), constrained = ph > 0.42, defined = ph > 0.56;
+      const fade = ph > 0.87 ? 1 - (ph - 0.87) / 0.13 : 1;
+      cL.save(); cL.translate(ox, oy); cL.globalAlpha = 0.3 * fade;
+      cL.lineWidth = 1.5; cL.lineCap = "round";
+      const n = segs.length;
+      segs.forEach((sg, i) => {
+        const p = Math.min(1, Math.max(0, draw * n - i)); if (p <= 0) return;
+        cL.strokeStyle = defined ? "rgba(226,234,244,0.95)" : "rgba(96,168,255,0.95)";
+        cL.beginPath();
+        if (sg.k === "l") { cL.moveTo(sg.x1, sg.y1); cL.lineTo(sg.x1 + (sg.x2 - sg.x1) * p, sg.y1 + (sg.y2 - sg.y1) * p); }
+        else { const d = sg.a1 - sg.a0; cL.arc(sg.cx, sg.cy, Math.max(1, sg.r), sg.a0, sg.a0 + d * p, d < 0); }
+        cL.stroke();
+      });
+      if (constrained && !defined) {
+        const badges = [[120 * s, -28 * s, "⌒"], [120 * s, -80 * s, "⌒"], [24 * s, -84 * s, "⌒"], [70 * s, -54 * s, "＝"], [0, -40 * s, "⟂"]];
+        const nb = Math.min(badges.length, Math.floor((ph - 0.42) / 0.026));
+        for (let i = 0; i < nb; i++) {
+          const b = badges[i];
+          cL.fillStyle = "rgba(16,20,26,0.92)"; cL.strokeStyle = "rgba(255,217,100,0.85)"; cL.lineWidth = 1;
+          cL.beginPath(); cL.arc(b[0], b[1], 8.5, 0, 7); cL.fill(); cL.stroke();
+          cL.fillStyle = "rgba(255,217,100,0.95)"; cL.font = "900 9.5px sans-serif"; cL.textAlign = "center";
+          cL.fillText(b[2], b[0], b[1] + 3.4);
+        }
+      }
+      if (defined) {
+        const dp = Math.min(1, (ph - 0.56) / 0.12);
+        cL.strokeStyle = "rgba(255,217,100,0.55)"; cL.lineWidth = 1;
+        cL.beginPath(); cL.moveTo(0, 15 * s); cL.lineTo(148 * s * dp, 15 * s); cL.stroke();
+        if (dp > 0.9) {
+          cL.fillStyle = "rgba(255,217,100,0.8)"; cL.font = "900 11px sans-serif"; cL.textAlign = "center";
+          cL.fillText("148", 74 * s, 28 * s); cL.fillText("R28", 158 * s, -96 * s);
+          cL.fillStyle = "rgba(233,238,245,0.85)"; cL.font = "900 12px sans-serif"; cL.fillText("⚫ 完全定義", 74 * s, -126 * s);
+        }
+      }
+      cL.restore(); cL.globalAlpha = 1;
+    }
+    requestAnimationFrame(loopL);
+  }
+  loopL();
+} catch (e) { console.error("[bgLines] ERROR", e); }
+</script>
+</body></html>

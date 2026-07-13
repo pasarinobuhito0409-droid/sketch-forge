@@ -1,0 +1,19 @@
+{
+  "name": "SKETCH FORGE ── ソリドワークス・スケッチ 朝15分道場",
+  "short_name": "SKETCH",
+  "description": "触れる3Dで覚える、SolidWorksスケッチとR形状の教科書",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e1116",
+  "theme_color": "#0e1116",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxOTIgMTkyJz48cmVjdCB3aWR0aD0nMTkyJyBoZWlnaHQ9JzE5Micgcng9JzM2JyBmaWxsPScjMGUxMTE2Jy8+PHBhdGggZD0nTTQ2IDEzOCBBNTQgNTQgMCAwIDEgMTAwIDQyJyBzdHJva2U9JyM0ZjlkZmYnIHN0cm9rZS13aWR0aD0nMTEnIGZpbGw9J25vbmUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjxwYXRoIGQ9J00xMDAgNDIgQTU0IDU0IDAgMCAxIDE0NiA4NCcgc3Ryb2tlPScjMTExODI3JyBzdHJva2Utd2lkdGg9JzExJyBmaWxsPSdub25lJyBzdHJva2UtbGluZWNhcD0ncm91bmQnLz48bGluZSB4MT0nNjAnIHkxPScxNTAnIHgyPScxNTAnIHkyPScxNTAnIHN0cm9rZT0nIzRmOWRmZicgc3Ryb2tlLXdpZHRoPSc3JyBzdHJva2UtbGluZWNhcD0ncm91bmQnLz48Y2lyY2xlIGN4PScxMDAnIGN5PSc0Micgcj0nMTAnIGZpbGw9JyNmZmQ5NjQnLz48Y2lyY2xlIGN4PScxNTAnIGN5PScxNTAnIHI9JzYnIGZpbGw9JyNmZmQ5NjQnIG9wYWNpdHk9JzAuOScvPjwvc3ZnPgo=",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
